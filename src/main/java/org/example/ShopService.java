@@ -3,13 +3,13 @@ package org.example;
 import java.util.List;
 
 public class ShopService {
-    private final OrderListRepo orderRepo;
+    private final OrderRepo orderRepo;
     private final ProductRepo productRepo;
 
-    public ShopService(OrderListRepo orderRepo, ProductRepo productRepo) {
+    public ShopService(OrderRepo orderRepo, ProductRepo productRepo) {
         this.orderRepo = orderRepo;
         this.productRepo = productRepo;
-    }
+    } 
 
     public Order placeOrder(String id, List<Product> products) {
         for (Product product : products) {
