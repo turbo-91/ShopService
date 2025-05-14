@@ -1,6 +1,5 @@
 package org.example;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -14,7 +13,7 @@ public class ShopService {
         this.productRepo = productRepo;
     }
 
-    public Order placeOrder(String id, List<OrderItem> items, BigDecimal totalPrice) {
+    public Order placeOrder(String id, List<OrderItem> items) {
         for (OrderItem item : items) {
             // getProduct will throw NoSuchElementException if not found
             productRepo.getProduct(item.product().id());
