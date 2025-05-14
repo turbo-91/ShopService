@@ -5,12 +5,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
-public class OrderListRepo {
+public class OrderListRepo implements OrderRepo {
     List<Order> orders = new ArrayList<>();
-
-    public List<Order> getOrders(String id) {
-        return orders;
-    }
 
     public Order getOrder(String id){
         for (Order order : orders) {
@@ -19,6 +15,11 @@ public class OrderListRepo {
             }
         }
         throw new NoSuchElementException("No order with id " + id);
+    }
+
+    @Override
+    public List<Order> getOrders() {
+        return orders;
     }
 
     public void addOrder(Order order){
