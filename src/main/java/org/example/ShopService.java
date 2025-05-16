@@ -15,7 +15,7 @@ public class ShopService {
 
 
     public List<Order> getOrdersByStatus(OrderStatus orderStatus) {
-        return orderRepo.findByOrderStatus(orderStatus);
+        return orderRepo.findByStatus(orderStatus);
     }
 
     public Order placeOrder(String id,

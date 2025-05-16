@@ -4,6 +4,7 @@ import lombok.Value;
 import lombok.With;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -16,25 +17,33 @@ public class Order {
     @Id
     String id;
 
-    /**
-     * Embedded list of items in this order.
-     * (Assumes OrderItem has getters for product() and quantity().)
-     */
+    @Field("items")
+    @With
     List<OrderItem> items;
 
-    OrderStatus orderStatus;
-    Instant orderTimestamp;
+    @Field("status")
+    OrderStatus status;
 
-    /**
-     * Calculate total price by summing product.price * quantity.
-     */
+    @Field("timestamp")
+    Instant timestamp;
+
     public BigDecimal totalPrice() {
         return items.stream()
                 .map(item ->
-                        item.product()
-                                .price()
-                                .multiply(BigDecimal.valueOf(item.quantity()))
+                        item.getProduct().getPrice()
+                                .multiply(BigDecimal.valueOf(item.getQuantity()))
                 )
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
+
+    public Order withOrderStatus(OrderStatus newStatus) {
+        return new Order(
+                this.id,
+                this.items,
+                newStatus,
+                this.timestamp
+        );
+    }
+
+
 }
