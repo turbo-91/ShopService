@@ -18,8 +18,8 @@ public class DemoRunner implements CommandLineRunner {
         // 1) Seed some products
         Product apple  = new Product("1", "Apple",  new BigDecimal("0.99"));
         Product banana = new Product("2", "Banana", new BigDecimal("0.59"));
-        productRepo.addProduct(apple);
-        productRepo.addProduct(banana);
+        productRepo.save(apple);
+        productRepo.save(banana);
 
         // 2) Build an order
         List<OrderItem> items = List.of(
