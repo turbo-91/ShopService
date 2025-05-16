@@ -21,7 +21,7 @@ public class Main {
                 new OrderItem(banana, 5)    // 5 * 0.59 = 2.95
         );
 
-        Order order = shopService.placeOrder("order1", items);
+        Order order = shopService.placeOrder("order1", items, OrderStatus.COMPLETED);
         System.out.println("Total price: €" + order.totalPrice());
 
     }

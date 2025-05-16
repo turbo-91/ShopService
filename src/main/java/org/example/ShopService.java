@@ -3,6 +3,7 @@ package org.example;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 public class ShopService {
     private final OrderRepo orderRepo;
@@ -13,13 +14,19 @@ public class ShopService {
         this.productRepo = productRepo;
     }
 
-    public Order placeOrder(String id, List<OrderItem> items) {
+    public List<Order> getOrdersByStatus(OrderStatus orderStatus) {
+        return orderRepo.getOrders().stream()
+                .filter(order -> order.orderStatus() == orderStatus)
+                .collect(Collectors.toList());
+    }
+
+    public Order placeOrder(String id, List<OrderItem> items, OrderStatus orderStatus) {
         for (OrderItem item : items) {
-            // getProduct will throw NoSuchElementException if not found
-            productRepo.getProduct(item.product().id());
+            productRepo.getProductById(item.product().id())
+                    .orElseThrow(() -> new ProductNotFoundException(item.product().id()));
         }
 
-        final Order newOrder = new Order(id, items);
+        Order newOrder = new Order(id, items, orderStatus);
         orderRepo.addOrder(newOrder);
         return newOrder;
     }
@@ -45,7 +52,7 @@ public class ShopService {
 
         // Replace the order with the updated one
         orderRepo.removeOrder(order);
-        orderRepo.addOrder(new Order(order.id(), updatedItems));
+        orderRepo.addOrder(new Order(order.id(), updatedItems, order.orderStatus()));
     }
 
 }

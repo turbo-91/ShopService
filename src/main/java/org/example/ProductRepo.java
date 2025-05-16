@@ -1,9 +1,6 @@
 package org.example;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Objects;
+import java.util.*;
 
 public class ProductRepo {
     List<Product> products = new ArrayList<>();
@@ -12,13 +9,10 @@ public class ProductRepo {
         return products;
     }
 
-    public Product getProduct(String id) {
-        for (Product product : products) {
-            if (Objects.equals(product.id(), id)) {
-                return product;
-            }
-        }
-        throw new NoSuchElementException("No product with id " + id);
+    public Optional<Product> getProductById(String id) {
+        return products.stream()
+                .filter(product -> Objects.equals(product.id(), id))
+                .findFirst();
     }
 
     public void addProduct(Product product){
