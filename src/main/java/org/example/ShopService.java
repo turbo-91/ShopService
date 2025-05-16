@@ -45,7 +45,7 @@ public class ShopService {
 
         // Replace the order with the updated one
         orderRepo.removeOrder(order);
-        orderRepo.addOrder(new Order(order.id(), updatedItems));
+        orderRepo.addOrder(new Order(order.id(), updatedItems, order.orderStatus()));
     }
 
 }
