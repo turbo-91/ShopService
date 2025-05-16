@@ -22,11 +22,11 @@ public class ShopService {
 
     public Order placeOrder(String id, List<OrderItem> items, OrderStatus orderStatus) {
         for (OrderItem item : items) {
-            // getProductById will throw NoSuchElementException if not found
-            productRepo.getProductById(item.product().id());
+            productRepo.getProductById(item.product().id())
+                    .orElseThrow(() -> new ProductNotFoundException(item.product().id()));
         }
 
-        final Order newOrder = new Order(id, items, orderStatus);
+        Order newOrder = new Order(id, items, orderStatus);
         orderRepo.addOrder(newOrder);
         return newOrder;
     }
