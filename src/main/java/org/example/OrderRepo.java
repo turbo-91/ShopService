@@ -1,10 +1,11 @@
 package org.example;
 
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
+
 import java.util.List;
 
-public interface OrderRepo {
-    void addOrder(Order order);
-    void removeOrder(Order order);
-    Order getOrder(String id);
-    List<Order> getOrders();
+@Repository
+public interface OrderRepo extends MongoRepository<Order, String> {
+    List<Order> findByStatus(OrderStatus status);
 }
