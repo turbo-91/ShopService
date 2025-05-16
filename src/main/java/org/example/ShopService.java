@@ -3,6 +3,7 @@ package org.example;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 public class ShopService {
     private final OrderRepo orderRepo;
@@ -11,6 +12,12 @@ public class ShopService {
     public ShopService(OrderRepo orderRepo, ProductRepo productRepo) {
         this.orderRepo = orderRepo;
         this.productRepo = productRepo;
+    }
+
+    public List<Order> getOrdersByStatus(OrderStatus orderStatus) {
+        return orderRepo.getOrders().stream()
+                .filter(order -> order.orderStatus() == orderStatus)
+                .collect(Collectors.toList());
     }
 
     public Order placeOrder(String id, List<OrderItem> items, OrderStatus orderStatus) {
