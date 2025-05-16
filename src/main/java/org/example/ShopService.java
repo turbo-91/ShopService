@@ -1,5 +1,6 @@
 package org.example;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -20,13 +21,21 @@ public class ShopService {
                 .collect(Collectors.toList());
     }
 
-    public Order placeOrder(String id, List<OrderItem> items, OrderStatus orderStatus) {
-        for (OrderItem item : items) {
-            productRepo.getProductById(item.product().id())
-                    .orElseThrow(() -> new ProductNotFoundException(item.product().id()));
-        }
+    public Order placeOrder(String id,
+                            List<OrderItem> items,
+                            OrderStatus orderStatus) {
+        // validate each product exists
+        items.forEach(item ->
+                productRepo.getProductById(item.product().id())
+                        .orElseThrow(() -> new ProductNotFoundException(item.product().id()))
+        );
 
-        Order newOrder = new Order(id, items, orderStatus);
+        Order newOrder = new Order(
+                id,
+                items,
+                orderStatus,
+                Instant.now()           // stamp with now
+        );
         orderRepo.addOrder(newOrder);
         return newOrder;
     }
@@ -41,28 +50,32 @@ public class ShopService {
         return updated;
     }
 
-    public void updateProductQuantity(String orderId, String productId, int newQuantity) {
-        Order order = orderRepo.getOrder(orderId);
-        List<OrderItem> updatedItems = new ArrayList<>();
+    public Order updateOrderItemQuantity(String orderId,
+                                         String productId,
+                                         int newQuantity) {
+        Order existing = orderRepo.getOrder(orderId);  // throws if missing
 
-        boolean found = false;
+        List<OrderItem> updatedItems = existing.items().stream()
+                .map(item ->
+                        item.product().id().equals(productId)
+                                ? new OrderItem(item.product(), newQuantity)
+                                : item
+                )
+                .collect(Collectors.toList());
 
-        for (OrderItem item : order.items()) {
-            if (item.product().id().equals(productId)) {
-                updatedItems.add(new OrderItem(item.product(), newQuantity));
-                found = true;
-            } else {
-                updatedItems.add(item);
-            }
-        }
+        boolean found = updatedItems.stream()
+                .anyMatch(item -> item.product().id().equals(productId));
 
         if (!found) {
-            throw new NoSuchElementException("Product not found in order: " + productId);
+            throw new NoSuchElementException(
+                    "Product not found in order: " + productId
+            );
         }
 
-        // Replace the order with the updated one
-        orderRepo.removeOrder(order);
-        orderRepo.addOrder(new Order(order.id(), updatedItems, order.orderStatus()));
+        Order updated = existing.withItems(updatedItems);
+        orderRepo.removeOrder(existing);
+        orderRepo.addOrder(updated);
+        return updated;
     }
 
 }

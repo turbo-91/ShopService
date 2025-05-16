@@ -2,13 +2,15 @@ package org.example;
 
 import lombok.With;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 
 @With
 public record Order(
         String id,
         List<OrderItem> items,
-        OrderStatus orderStatus
+        OrderStatus orderStatus,
+        Instant orderTimestamp
 ) {
     public BigDecimal totalPrice() {
         return items.stream()
