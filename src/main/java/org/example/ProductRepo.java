@@ -12,7 +12,7 @@ public class ProductRepo {
         return products;
     }
 
-    public Product getProduct(String id) {
+    public Product getProductById(String id) {
         for (Product product : products) {
             if (Objects.equals(product.id(), id)) {
                 return product;

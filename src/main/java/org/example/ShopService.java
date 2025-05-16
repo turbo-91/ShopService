@@ -13,13 +13,13 @@ public class ShopService {
         this.productRepo = productRepo;
     }
 
-    public Order placeOrder(String id, List<OrderItem> items) {
+    public Order placeOrder(String id, List<OrderItem> items, OrderStatus orderStatus) {
         for (OrderItem item : items) {
-            // getProduct will throw NoSuchElementException if not found
-            productRepo.getProduct(item.product().id());
+            // getProductById will throw NoSuchElementException if not found
+            productRepo.getProductById(item.product().id());
         }
 
-        final Order newOrder = new Order(id, items);
+        final Order newOrder = new Order(id, items, orderStatus);
         orderRepo.addOrder(newOrder);
         return newOrder;
     }
