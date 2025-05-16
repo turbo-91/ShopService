@@ -31,6 +31,16 @@ public class ShopService {
         return newOrder;
     }
 
+    public Order updateOrderStatus(String orderId, OrderStatus newStatus) {
+        Order existing = orderRepo.getOrder(orderId);
+        Order updated = existing.withOrderStatus(newStatus);
+
+        orderRepo.removeOrder(existing);
+        orderRepo.addOrder(updated);
+
+        return updated;
+    }
+
     public void updateProductQuantity(String orderId, String productId, int newQuantity) {
         Order order = orderRepo.getOrder(orderId);
         List<OrderItem> updatedItems = new ArrayList<>();
