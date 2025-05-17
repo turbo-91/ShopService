@@ -143,17 +143,39 @@ public class DemoRunner implements CommandLineRunner {
 
         // 15) order 2 gets refunded
         Order refundedOrder2 = shopService.refundOrder(order2.getId());
-        System.out.println("[SCENARIO M2] Refunded order2: status=" + refundedOrder2.getStatus());
+        System.out.println("[SCENARIO O] Refunded order2: status=" + refundedOrder2.getStatus());
         System.out.println("Slim Jeans stock after refund: "
                 + productRepo.findById("2").orElseThrow().getStock());
         System.out.println();
 
+        // 16) Manual release of reserved stock ===
+        System.out.println("=== SCENARIO P: Manual release of reserved stock ===");
+
+// 1) Reserve 3 units of product "1"
+        String demoCartId = "cart-manual-release";
+        List<CartItem> demoItems = List.of(new CartItem("1", 3));
+        shopService.reserveStockForCart(demoCartId, demoItems);
+
+// 2) Check stock after reservation
+        int afterReserve = productRepo.findById("1")
+                .orElseThrow().getStock();
+        System.out.println("Stock after reservation: " + afterReserve);
+
+// 3) Manually release the reserved stock
+        shopService.releaseReservedStock("1", 3);
+
+// 4) Check stock after release
+        int afterRelease = productRepo.findById("1")
+                .orElseThrow().getStock();
+        System.out.println("Stock after manual release: " + afterRelease);
+        System.out.println();
+
 
         // Final state of orders by status
-        System.out.println("[SCENARIO X] Final PENDING orders? " + shopService.getOrdersByStatus(OrderStatus.PROCESSING).size() + " orders found");
+        System.out.println("[SCENARIO OMEGA-I] Final PENDING orders? " + shopService.getOrdersByStatus(OrderStatus.PROCESSING).size() + " orders found");
         System.out.println("Final PENDING orders: " + shopService.getOrdersByStatus(OrderStatus.PROCESSING));
         System.out.println();
-        System.out.println("[SCENARIO I] Final COMPLETE orders? " + shopService.getOrdersByStatus(OrderStatus.COMPLETED).size() + " orders found");
+        System.out.println("[SCENARIO OMEGA-II] Final COMPLETE orders? " + shopService.getOrdersByStatus(OrderStatus.COMPLETED).size() + " orders found");
         System.out.println("Final COMPLETED orders: " + shopService.getOrdersByStatus(OrderStatus.COMPLETED));
     }
 }

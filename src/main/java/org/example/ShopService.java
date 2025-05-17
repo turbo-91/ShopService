@@ -165,6 +165,15 @@ public class ShopService {
         return total;
     }
 
+    public void releaseReservedStock(String productId, int amount) {
+        logger.info("Releasing {} units back to stock for product {}", amount, productId);
+        Product product = productRepo.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
+
+        product.setStock(product.getStock() + amount);
+        productRepo.save(product);
+    }
+
 
     public List<Product> searchProducts(String keyword) {
         String kw = keyword.trim();
