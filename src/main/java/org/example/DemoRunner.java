@@ -120,6 +120,13 @@ public class DemoRunner implements CommandLineRunner {
         System.out.println("[SCENARIO K] Cart total: €" + total);
         System.out.println();
 
+        System.out.println("[SCENARIO L] searchProducts(\"blue\"):");
+        List<Product> blues = shopService.searchProducts("blue");
+        System.out.println("Search results (" + blues.size() + "): ");
+        blues.forEach(p -> System.out.println(" - " + p.getName() + ","
+                + " color: [" + p.getColor() + "]"));
+        System.out.println();
+
         // Final state of orders by status
         System.out.println("[SCENARIO X] Final PENDING orders? " + shopService.getOrdersByStatus(OrderStatus.PROCESSING).size() + " orders found");
         System.out.println("Final PENDING orders: " + shopService.getOrdersByStatus(OrderStatus.PROCESSING));

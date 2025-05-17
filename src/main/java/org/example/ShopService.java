@@ -131,4 +131,10 @@ public class ShopService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    public List<Product> searchProducts(String keyword) {
+        String kw = keyword.trim();
+        return productRepo.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(
+                kw, kw, kw, kw, kw);
+    }
+
 }
