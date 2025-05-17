@@ -18,18 +18,25 @@ public class ShopService {
         return orderRepo.findByStatus(orderStatus);
     }
 
+
     public Order placeOrder(String id,
                             List<OrderItem> items,
                             OrderStatus orderStatus) {
-        // validate each product exists
-        items.forEach(item -> {
-            // ensure item.product is present in the database
-            String productId = item.getProduct().getId();
-            productRepo.findById(productId)
-                    .orElseThrow(() -> new ProductNotFoundException(productId));
-        });
+        // Validate each product exists and decrement its stock
+        for (OrderItem item : items) {
+            String pid = item.getProduct().getId();
+            Product product = productRepo.findById(pid)
+                    .orElseThrow(() -> new ProductNotFoundException(pid));
 
-        // create and save a new Order document
+            int newStock = product.getStock() - item.getQuantity();
+            if (newStock < 0) {
+                throw new IllegalStateException("Insufficient stock for product: " + pid);
+            }
+            product.setStock(newStock);
+            productRepo.save(product);
+        }
+
+        // Create and save the new order
         Order newOrder = new Order(
                 id,
                 items,
