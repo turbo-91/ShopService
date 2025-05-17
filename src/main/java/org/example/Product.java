@@ -12,6 +12,10 @@ public class Product {
     @Id
     private final String id;
     private String name;
+    private String brand;
+    private String description;
+    private String color;
+    private String size;
     private BigDecimal price;
     private int stock;
 }
