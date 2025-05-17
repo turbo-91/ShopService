@@ -97,5 +97,4 @@ public class ShopService {
         product.setStock(newStock);
         productRepo.save(product);
     }
-
 }
