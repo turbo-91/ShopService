@@ -12,6 +12,7 @@ import java.util.NoSuchElementException;
 public class ShopService {
     private final OrderRepo orderRepo;
     private final ProductRepo productRepo;
+    private final CartRepo cartRepo;
 
 
     public List<Order> getOrdersByStatus(OrderStatus orderStatus) {
@@ -97,4 +98,26 @@ public class ShopService {
         product.setStock(newStock);
         productRepo.save(product);
     }
+
+    public Cart reserveStockForCart(String cartId, List<CartItem> items) {
+        // Decrement stock for each item
+        for (CartItem item : items) {
+            String productId = item.getProductId();
+            Product product = productRepo.findById(productId)
+                    .orElseThrow(() -> new ProductNotFoundException(productId));
+
+            int remaining = product.getStock() - item.getQuantity();
+            if (remaining < 0) {
+                throw new IllegalStateException("Insufficient stock for product: " + productId);
+            }
+            product.setStock(remaining);
+            productRepo.save(product);
+        }
+
+        // Build and save the shopping cart
+        Cart cart = new Cart(cartId, items, Instant.now());
+        return cartRepo.save(cart);
+    }
+
+
 }

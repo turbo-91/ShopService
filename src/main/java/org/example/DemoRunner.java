@@ -20,7 +20,9 @@ public class DemoRunner implements CommandLineRunner {
         productRepo.save(new Product("2", "Banana", new BigDecimal("0.59"), 200));
         System.out.println(" ");
         System.out.println("[SCENARIO A] Seeded products: Apple and Banana");
-        System.out.println(" ");
+        System.out.println("Stocks: Apple=" + productRepo.findById("1").get().getStock()
+                + ", Banana=" + productRepo.findById("2").get().getStock());
+        System.out.println();
 
         // 2) Place a new order (PENDING)
         List<OrderItem> items1 = List.of(
@@ -31,7 +33,9 @@ public class DemoRunner implements CommandLineRunner {
         System.out.println("Items: " + order1.getItems());
         System.out.println("Status: " + order1.getStatus());
         System.out.println("Timestamp: " + order1.getTimestamp());
-        System.out.println(" ");
+        System.out.println("New Apple stock="
+                + productRepo.findById("1").get().getStock());
+        System.out.println();
 
         // 3) Query orders by status PENDING
         List<Order> pendingOrders = shopService.getOrdersByStatus(OrderStatus.PROCESSING);
@@ -69,8 +73,31 @@ public class DemoRunner implements CommandLineRunner {
         System.out.println("Items after update: " + order2.getItems());
         System.out.println(" ");
 
-        // 8) Final state of orders by status
-        System.out.println("[SCENARIO H] Final PENDING orders? " + shopService.getOrdersByStatus(OrderStatus.PROCESSING).size() + " orders found");
+        // 8) Demonstrate goodsIn: restock apples
+        shopService.goodsIn("1", 50);
+        System.out.println("[SCENARIO H] goodsIn(Apple,50): Apple stock="
+                + productRepo.findById("1").get().getStock());
+        System.out.println();
+
+        // 9) Demonstrate goodsOut: ship bananas
+        shopService.goodsOut("2", 20);
+        System.out.println("[SCENARIO I] goodsOut(Banana,20): Banana stock="
+                + productRepo.findById("2").get().getStock());
+        System.out.println();
+
+        // 10) Reserve stock in a cart
+        List<CartItem> cartItems = List.of(
+                new CartItem("1", 5),
+                new CartItem("2", 10)
+        );
+        Cart cart = shopService.reserveStockForCart("cart1", cartItems);
+        System.out.println("[SCENARIO E] Reserved stock for cart1: " + cart.getItems());
+        System.out.println("After reserve, stocks: Apple=" + productRepo.findById("1").get().getStock()
+                + ", Banana=" + productRepo.findById("2").get().getStock());
+        System.out.println();
+
+        // Final state of orders by status
+        System.out.println("[SCENARIO X] Final PENDING orders? " + shopService.getOrdersByStatus(OrderStatus.PROCESSING).size() + " orders found");
         System.out.println("Final PENDING orders: " + shopService.getOrdersByStatus(OrderStatus.PROCESSING));
         System.out.println(" ");
         System.out.println("[SCENARIO I] Final COMPLETE orders? " + shopService.getOrdersByStatus(OrderStatus.COMPLETED).size() + " orders found");
