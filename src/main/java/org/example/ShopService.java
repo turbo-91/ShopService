@@ -27,6 +27,7 @@ public class ShopService {
     public Order placeOrder(String id,
                             List<OrderItem> items,
                             OrderStatus orderStatus) {
+        logger.info("Placing order {} with {} items", id, items.size());
         // Validate each product exists and decrement its stock
         for (OrderItem item : items) {
             String pid = item.getProduct().getId();
@@ -35,6 +36,8 @@ public class ShopService {
 
             int newStock = product.getStock() - item.getQuantity();
             if (newStock < 0) {
+                logger.error("Insufficient stock (have={}, need={}) for product {}",
+                        product.getStock(), item.getQuantity(), pid);
                 throw new IllegalStateException("Insufficient stock for product: " + pid);
             }
             product.setStock(newStock);
@@ -55,8 +58,10 @@ public class ShopService {
     public Order updateOrderStatus(String orderId, OrderStatus newStatus) {
         Order existing = orderRepo.findById(orderId)
                 .orElseThrow(() -> new NoSuchElementException("Order not found: " + orderId));
-        Order updated = existing.withOrderStatus(newStatus);
-        return orderRepo.save(updated);
+        logger.debug("Updating order {} status → {}", orderId, newStatus);
+        Order updated = orderRepo.save(existing.withOrderStatus(newStatus));
+        logger.info("Order {} status updated to {}", orderId, newStatus);
+        return updated;
     }
 
 
@@ -76,13 +81,18 @@ public class ShopService {
                 .anyMatch(item -> item.getProduct().getId().equals(productId));
 
         if (!found) {
+            logger.warn("Tried to update quantity for product {} in order {} but item not found",
+                    productId, orderId);
             throw new NoSuchElementException(
                     "Product not found in order: " + productId
             );
         }
 
         Order updatedOrder = existing.withItems(updatedItems);
-        return orderRepo.save(updatedOrder);
+        Order saved = orderRepo.save(updatedOrder);
+        logger.info("Order {} item {} quantity set to {}",
+                orderId, productId, newQuantity);
+        return saved;
     }
 
     public void goodsIn(String productId, int amount) {
@@ -90,6 +100,7 @@ public class ShopService {
                 .orElseThrow(() -> new ProductNotFoundException(productId));
         int newStock = product.getStock() + amount;
         product.setStock(newStock);
+        logger.info("Increasing stock for product {} by {}", productId, amount);
         productRepo.save(product);
     }
 
@@ -98,13 +109,17 @@ public class ShopService {
                 .orElseThrow(() -> new ProductNotFoundException(productId));
         int newStock = product.getStock() - amount;
         if (newStock < 0) {
+            logger.error("Cannot remove {} units from product {} – only {} in stock",
+                    amount, productId, product.getStock());
             throw new IllegalStateException("Insufficient stock for product: " + productId);
         }
         product.setStock(newStock);
+        logger.info("Decreasing stock for product {} by {}", productId, amount);
         productRepo.save(product);
     }
 
     public Cart reserveStockForCart(String cartId, List<CartItem> items) {
+        logger.info("Reserving stock for cart {} ({} items)", cartId, items.size());
         // Decrement stock for each item
         for (CartItem item : items) {
             String productId = item.getProductId();
@@ -113,6 +128,8 @@ public class ShopService {
 
             int remaining = product.getStock() - item.getQuantity();
             if (remaining < 0) {
+                logger.warn("Insufficient stock for reservation: product {} needed {}, have {}",
+                        productId, item.getQuantity(), product.getStock());
                 throw new IllegalStateException("Insufficient stock for product: " + productId);
             }
             product.setStock(remaining);
@@ -121,26 +138,47 @@ public class ShopService {
 
         // Build and save the shopping cart
         Cart cart = new Cart(cartId, items, Instant.now());
-        return cartRepo.save(cart);
+        Cart saved = cartRepo.save(cart);
+        logger.info("Stock reserved for cart {}; created at {}", saved.getId(), saved.getCreatedAt());
+        return saved;
     }
 
     public BigDecimal calculateCartTotal(List<CartItem> items) {
-        return items.stream()
+        logger.debug("Calculating cart total for {} items", items.size());
+
+        BigDecimal total = items.stream()
                 .map(item -> {
                     Product product = productRepo.findById(item.getProductId())
                             .orElseThrow(() -> new ProductNotFoundException(item.getProductId()));
-                    return product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+                    BigDecimal lineTotal = product.getPrice()
+                            .multiply(BigDecimal.valueOf(item.getQuantity()));
+                    logger.debug("Line item: productId={}, price={}, quantity={}, lineTotal={}",
+                            item.getProductId(),
+                            product.getPrice(),
+                            item.getQuantity(),
+                            lineTotal);
+                    return lineTotal;
                 })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        logger.info("Cart total computed: {}", total);
+        return total;
     }
+
 
     public List<Product> searchProducts(String keyword) {
         String kw = keyword.trim();
-        return productRepo.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(
-                kw, kw, kw, kw, kw);
+        logger.info("Searching products with keyword='{}'", kw);
+
+        List<Product> results = productRepo
+                .findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(kw, kw, kw, kw, kw);
+
+        logger.info("Found {} products matching '{}'", results.size(), kw);
+        return results;
     }
 
     public Order cancelOrder(String orderId) {
+        logger.info("Cancelling order {}", orderId);
         Order existing = orderRepo.findById(orderId)
                 .orElseThrow(() -> new NoSuchElementException("Order not found: " + orderId));
 
@@ -151,11 +189,14 @@ public class ShopService {
                     .orElseThrow(() -> new ProductNotFoundException(pid));
             product.setStock(product.getStock() + item.getQuantity());
             productRepo.save(product);
+            logger.debug("Restocked {} units of product {}", item.getQuantity(), pid);
         }
 
         // Mark order as canceled
         Order canceled = existing.withOrderStatus(OrderStatus.CANCELED);
-        return orderRepo.save(canceled);
+        Order saved = orderRepo.save(canceled);
+        logger.info("Order {} marked as CANCELED", orderId);
+        return saved;
     }
 
     public Order refundOrder(String orderId) {
