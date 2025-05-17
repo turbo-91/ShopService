@@ -127,6 +127,17 @@ public class DemoRunner implements CommandLineRunner {
                 + " color: [" + p.getColor() + "]"));
         System.out.println();
 
+        // 3) Cancel the order and restock
+        Order canceledOrder = shopService.cancelOrder(order1.getId());
+        System.out.println("[SCENARIO M1] Canceled order1: status=" + canceledOrder.getStatus());
+        System.out.println("T-Shirt stock after cancellation=" + productRepo.findById("1").get().getStock());
+
+        // 3a) Verify order is no longer in pending list
+        List<Order> pendingAfterCancel = shopService.getOrdersByStatus(OrderStatus.PROCESSING);
+        System.out.println("[SCENARIO 2] Pending orders after cancel: " + pendingAfterCancel.size());
+        System.out.println();
+
+
         // Final state of orders by status
         System.out.println("[SCENARIO X] Final PENDING orders? " + shopService.getOrdersByStatus(OrderStatus.PROCESSING).size() + " orders found");
         System.out.println("Final PENDING orders: " + shopService.getOrdersByStatus(OrderStatus.PROCESSING));

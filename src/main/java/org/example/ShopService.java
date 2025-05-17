@@ -137,4 +137,22 @@ public class ShopService {
                 kw, kw, kw, kw, kw);
     }
 
+    public Order cancelOrder(String orderId) {
+        Order existing = orderRepo.findById(orderId)
+                .orElseThrow(() -> new NoSuchElementException("Order not found: " + orderId));
+
+        // Restock each item
+        for (OrderItem item : existing.getItems()) {
+            String pid = item.getProduct().getId();
+            Product product = productRepo.findById(pid)
+                    .orElseThrow(() -> new ProductNotFoundException(pid));
+            product.setStock(product.getStock() + item.getQuantity());
+            productRepo.save(product);
+        }
+
+        // Mark order as canceled
+        Order canceled = existing.withOrderStatus(OrderStatus.CANCELED);
+        return orderRepo.save(canceled);
+    }
+
 }
