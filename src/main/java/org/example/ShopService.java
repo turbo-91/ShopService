@@ -3,7 +3,8 @@ package org.example;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -15,6 +16,8 @@ public class ShopService {
     private final OrderRepo orderRepo;
     private final ProductRepo productRepo;
     private final CartRepo cartRepo;
+
+    private static final Logger logger = LoggerFactory.getLogger(ShopService.class);
 
 
     public List<Order> getOrdersByStatus(OrderStatus orderStatus) {
@@ -153,6 +156,40 @@ public class ShopService {
         // Mark order as canceled
         Order canceled = existing.withOrderStatus(OrderStatus.CANCELED);
         return orderRepo.save(canceled);
+    }
+
+    public Order refundOrder(String orderId) {
+        // 1) Fetch order or fail
+        Order existing = orderRepo.findById(orderId)
+                .orElseThrow(() -> new NoSuchElementException("Order not found: " + orderId));
+
+        // 2) Validate state
+        if (existing.getStatus() == OrderStatus.REFUNDED) {
+            throw new IllegalStateException("Order already refunded: " + orderId);
+        }
+        if (existing.getStatus() != OrderStatus.COMPLETED) {
+            throw new IllegalStateException(
+                    "Only completed orders can be refunded. Current status: " + existing.getStatus()
+            );
+        }
+
+        // 3) Restock products
+        for (OrderItem item : existing.getItems()) {
+            String productId = item.getProduct().getId();
+            Product product = productRepo.findById(productId)
+                    .orElseThrow(() -> new ProductNotFoundException(productId));
+            product.setStock(product.getStock() + item.getQuantity());
+            productRepo.save(product);
+        }
+
+        // 4) Mark refunded and save
+        Order refunded = existing.withOrderStatus(OrderStatus.REFUNDED);
+        Order saved    = orderRepo.save(refunded);
+
+        // 5) Log it
+        logger.info("Processed refund for order {}", orderId);
+
+        return saved;
     }
 
 }
