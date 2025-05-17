@@ -40,6 +40,7 @@ public class DemoRunner implements CommandLineRunner {
         // 3) Query orders by status PENDING
         List<Order> pendingOrders = shopService.getOrdersByStatus(OrderStatus.PROCESSING);
         System.out.println("[SCENARIO C] Pending orders count: " + pendingOrders.size());
+        System.out.println();
 
         // 4) Update order1 status to COMPLETED
         Order completedOrder = shopService.updateOrderStatus(order1.getId(), OrderStatus.COMPLETED);
@@ -91,15 +92,20 @@ public class DemoRunner implements CommandLineRunner {
                 new CartItem("2", 10)
         );
         Cart cart = shopService.reserveStockForCart("cart1", cartItems);
-        System.out.println("[SCENARIO E] Reserved stock for cart1: " + cart.getItems());
+        System.out.println("[SCENARIO J] Reserved stock for cart1: " + cart.getItems());
         System.out.println("After reserve, stocks: Apple=" + productRepo.findById("1").get().getStock()
                 + ", Banana=" + productRepo.findById("2").get().getStock());
+        System.out.println();
+
+        // 11) Calculate cart total without placing an order
+        BigDecimal total = shopService.calculateCartTotal(cartItems);
+        System.out.println("[SCENARIO K] Cart total: €" + total);
         System.out.println();
 
         // Final state of orders by status
         System.out.println("[SCENARIO X] Final PENDING orders? " + shopService.getOrdersByStatus(OrderStatus.PROCESSING).size() + " orders found");
         System.out.println("Final PENDING orders: " + shopService.getOrdersByStatus(OrderStatus.PROCESSING));
-        System.out.println(" ");
+        System.out.println();
         System.out.println("[SCENARIO I] Final COMPLETE orders? " + shopService.getOrdersByStatus(OrderStatus.COMPLETED).size() + " orders found");
         System.out.println("Final COMPLETED orders: " + shopService.getOrdersByStatus(OrderStatus.COMPLETED));
     }

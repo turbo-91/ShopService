@@ -3,6 +3,8 @@ package org.example;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -119,5 +121,14 @@ public class ShopService {
         return cartRepo.save(cart);
     }
 
+    public BigDecimal calculateCartTotal(List<CartItem> items) {
+        return items.stream()
+                .map(item -> {
+                    Product product = productRepo.findById(item.getProductId())
+                            .orElseThrow(() -> new ProductNotFoundException(item.getProductId()));
+                    return product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 
 }
