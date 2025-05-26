@@ -1,6 +1,10 @@
-package org.example;
+package org.shopservice.runner;
 
 import lombok.RequiredArgsConstructor;
+import org.shopservice.model.*;
+import org.shopservice.model.enums.OrderStatus;
+import org.shopservice.repository.ProductRepo;
+import org.shopservice.service.ShopService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 

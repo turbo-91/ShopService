@@ -1,4 +1,4 @@
-package org.example;
+package org.shopservice.model;
 
 import lombok.Value;
 import lombok.With;

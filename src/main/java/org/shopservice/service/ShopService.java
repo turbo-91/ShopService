@@ -1,8 +1,13 @@
-package org.example;
+package org.shopservice.service;
 
 import lombok.RequiredArgsConstructor;
+import org.shopservice.exception.ProductNotFoundException;
+import org.shopservice.model.*;
+import org.shopservice.model.enums.OrderStatus;
+import org.shopservice.repository.CartRepo;
+import org.shopservice.repository.OrderRepo;
+import org.shopservice.repository.ProductRepo;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
@@ -19,7 +24,7 @@ public class ShopService {
 
     private static final Logger logger = LoggerFactory.getLogger(ShopService.class);
 
-
+    // Order Management
     public List<Order> getOrdersByStatus(OrderStatus orderStatus) {
         return orderRepo.findByStatus(orderStatus);
     }
@@ -95,97 +100,6 @@ public class ShopService {
         return saved;
     }
 
-    public void goodsIn(String productId, int amount) {
-        Product product = productRepo.findById(productId)
-                .orElseThrow(() -> new ProductNotFoundException(productId));
-        int newStock = product.getStock() + amount;
-        product.setStock(newStock);
-        logger.info("Increasing stock for product {} by {}", productId, amount);
-        productRepo.save(product);
-    }
-
-    public void goodsOut(String productId, int amount) {
-        Product product = productRepo.findById(productId)
-                .orElseThrow(() -> new ProductNotFoundException(productId));
-        int newStock = product.getStock() - amount;
-        if (newStock < 0) {
-            logger.error("Cannot remove {} units from product {} – only {} in stock",
-                    amount, productId, product.getStock());
-            throw new IllegalStateException("Insufficient stock for product: " + productId);
-        }
-        product.setStock(newStock);
-        logger.info("Decreasing stock for product {} by {}", productId, amount);
-        productRepo.save(product);
-    }
-
-    public Cart reserveStockForCart(String cartId, List<CartItem> items) {
-        logger.info("Reserving stock for cart {} ({} items)", cartId, items.size());
-        // Decrement stock for each item
-        for (CartItem item : items) {
-            String productId = item.getProductId();
-            Product product = productRepo.findById(productId)
-                    .orElseThrow(() -> new ProductNotFoundException(productId));
-
-            int remaining = product.getStock() - item.getQuantity();
-            if (remaining < 0) {
-                logger.warn("Insufficient stock for reservation: product {} needed {}, have {}",
-                        productId, item.getQuantity(), product.getStock());
-                throw new IllegalStateException("Insufficient stock for product: " + productId);
-            }
-            product.setStock(remaining);
-            productRepo.save(product);
-        }
-
-        // Build and save the shopping cart
-        Cart cart = new Cart(cartId, items, Instant.now());
-        Cart saved = cartRepo.save(cart);
-        logger.info("Stock reserved for cart {}; created at {}", saved.getId(), saved.getCreatedAt());
-        return saved;
-    }
-
-    public BigDecimal calculateCartTotal(List<CartItem> items) {
-        logger.debug("Calculating cart total for {} items", items.size());
-
-        BigDecimal total = items.stream()
-                .map(item -> {
-                    Product product = productRepo.findById(item.getProductId())
-                            .orElseThrow(() -> new ProductNotFoundException(item.getProductId()));
-                    BigDecimal lineTotal = product.getPrice()
-                            .multiply(BigDecimal.valueOf(item.getQuantity()));
-                    logger.debug("Line item: productId={}, price={}, quantity={}, lineTotal={}",
-                            item.getProductId(),
-                            product.getPrice(),
-                            item.getQuantity(),
-                            lineTotal);
-                    return lineTotal;
-                })
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        logger.info("Cart total computed: {}", total);
-        return total;
-    }
-
-    public void releaseReservedStock(String productId, int amount) {
-        logger.info("Releasing {} units back to stock for product {}", amount, productId);
-        Product product = productRepo.findById(productId)
-                .orElseThrow(() -> new ProductNotFoundException(productId));
-
-        product.setStock(product.getStock() + amount);
-        productRepo.save(product);
-    }
-
-
-    public List<Product> searchProducts(String keyword) {
-        String kw = keyword.trim();
-        logger.info("Searching products with keyword='{}'", kw);
-
-        List<Product> results = productRepo
-                .findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(kw, kw, kw, kw, kw);
-
-        logger.info("Found {} products matching '{}'", results.size(), kw);
-        return results;
-    }
-
     public Order cancelOrder(String orderId) {
         logger.info("Cancelling order {}", orderId);
         Order existing = orderRepo.findById(orderId)
@@ -240,6 +154,102 @@ public class ShopService {
         logger.info("Processed refund for order {}", orderId);
 
         return saved;
+    }
+
+    // STOCK MANAGEMENT
+
+    public void goodsIn(String productId, int amount) {
+        Product product = productRepo.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
+        int newStock = product.getStock() + amount;
+        product.setStock(newStock);
+        logger.info("Increasing stock for product {} by {}", productId, amount);
+        productRepo.save(product);
+    }
+
+    public void goodsOut(String productId, int amount) {
+        Product product = productRepo.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
+        int newStock = product.getStock() - amount;
+        if (newStock < 0) {
+            logger.error("Cannot remove {} units from product {} – only {} in stock",
+                    amount, productId, product.getStock());
+            throw new IllegalStateException("Insufficient stock for product: " + productId);
+        }
+        product.setStock(newStock);
+        logger.info("Decreasing stock for product {} by {}", productId, amount);
+        productRepo.save(product);
+    }
+
+    public void releaseReservedStock(String productId, int amount) {
+        logger.info("Releasing {} units back to stock for product {}", amount, productId);
+        Product product = productRepo.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
+
+        product.setStock(product.getStock() + amount);
+        productRepo.save(product);
+    }
+
+    // CART OPERATIONS
+
+    public Cart reserveStockForCart(String cartId, List<CartItem> items) {
+        logger.info("Reserving stock for cart {} ({} items)", cartId, items.size());
+        // Decrement stock for each item
+        for (CartItem item : items) {
+            String productId = item.getProductId();
+            Product product = productRepo.findById(productId)
+                    .orElseThrow(() -> new ProductNotFoundException(productId));
+
+            int remaining = product.getStock() - item.getQuantity();
+            if (remaining < 0) {
+                logger.warn("Insufficient stock for reservation: product {} needed {}, have {}",
+                        productId, item.getQuantity(), product.getStock());
+                throw new IllegalStateException("Insufficient stock for product: " + productId);
+            }
+            product.setStock(remaining);
+            productRepo.save(product);
+        }
+
+        // Build and save the shopping cart
+        Cart cart = new Cart(cartId, items, Instant.now());
+        Cart saved = cartRepo.save(cart);
+        logger.info("Stock reserved for cart {}; created at {}", saved.getId(), saved.getCreatedAt());
+        return saved;
+    }
+
+    public BigDecimal calculateCartTotal(List<CartItem> items) {
+        logger.debug("Calculating cart total for {} items", items.size());
+
+        BigDecimal total = items.stream()
+                .map(item -> {
+                    Product product = productRepo.findById(item.getProductId())
+                            .orElseThrow(() -> new ProductNotFoundException(item.getProductId()));
+                    BigDecimal lineTotal = product.getPrice()
+                            .multiply(BigDecimal.valueOf(item.getQuantity()));
+                    logger.debug("Line item: productId={}, price={}, quantity={}, lineTotal={}",
+                            item.getProductId(),
+                            product.getPrice(),
+                            item.getQuantity(),
+                            lineTotal);
+                    return lineTotal;
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        logger.info("Cart total computed: {}", total);
+        return total;
+    }
+
+    // PRODUCT SEARCH
+
+    public List<Product> searchProducts(String keyword) {
+        String kw = keyword.trim();
+        logger.info("Searching products with keyword='{}'", kw);
+
+        List<Product> results = productRepo
+                .findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(kw, kw, kw, kw, kw);
+
+        logger.info("Found {} products matching '{}'", results.size(), kw);
+        return results;
     }
 
 }
