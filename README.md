@@ -1,6 +1,4 @@
 # Shop Service Backend
-### Features
-
 - Calculates total price based on Product x Quantity
 - Uses BigDecimal for accurate currency computation
 - Clean separation of data, logic, and repository layers
