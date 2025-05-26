@@ -1,7 +1,8 @@
-package org.example;
+package org.shopservice.model;
 
 import lombok.Value;
 import lombok.With;
+import org.shopservice.model.enums.OrderStatus;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
