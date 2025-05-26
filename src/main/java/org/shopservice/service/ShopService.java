@@ -1,6 +1,8 @@
 package org.shopservice.service;
 
 import lombok.RequiredArgsConstructor;
+import org.shopservice.exception.InsufficientStockException;
+import org.shopservice.exception.OrderNotFoundException;
 import org.shopservice.exception.ProductNotFoundException;
 import org.shopservice.model.*;
 import org.shopservice.model.enums.OrderStatus;
@@ -25,6 +27,17 @@ public class ShopService {
     private static final Logger logger = LoggerFactory.getLogger(ShopService.class);
 
     // Order Management
+
+    public List<Order> getAllOrders() {
+        return orderRepo.findAll();
+    }
+
+    public Order getOrderById(String orderId) {
+        logger.info("Fetching order with ID: {}", orderId);
+        return orderRepo.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+    }
+
     public List<Order> getOrdersByStatus(OrderStatus orderStatus) {
         return orderRepo.findByStatus(orderStatus);
     }
@@ -174,7 +187,7 @@ public class ShopService {
         if (newStock < 0) {
             logger.error("Cannot remove {} units from product {} – only {} in stock",
                     amount, productId, product.getStock());
-            throw new IllegalStateException("Insufficient stock for product: " + productId);
+            throw new InsufficientStockException("Insufficient stock for product: " + productId);
         }
         product.setStock(newStock);
         logger.info("Decreasing stock for product {} by {}", productId, amount);

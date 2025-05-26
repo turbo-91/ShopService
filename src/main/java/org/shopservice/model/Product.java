@@ -7,10 +7,11 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.math.BigDecimal;
 
 @Document(collection = "products")
-@Data@AllArgsConstructor
+@Data
+@AllArgsConstructor
 public class Product {
     @Id
-    private final String id;
+    private String id; // Now mutable
     private String name;
     private String brand;
     private String description;
