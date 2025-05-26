@@ -8,7 +8,7 @@ import java.util.*;
 
 @Repository
 public interface ProductRepo extends MongoRepository<Product, String> {
-    Optional<Object> getProductById(String id);
+    Optional<Product> getProductById(String id);
     List<Product> findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase
             (String nameKw,
              String descKw,
