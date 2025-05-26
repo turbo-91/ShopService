@@ -1,6 +1,7 @@
 package org.shopservice.service;
 
 import lombok.RequiredArgsConstructor;
+import org.shopservice.exception.InsufficientStockException;
 import org.shopservice.exception.OrderNotFoundException;
 import org.shopservice.exception.ProductNotFoundException;
 import org.shopservice.model.*;
@@ -186,7 +187,7 @@ public class ShopService {
         if (newStock < 0) {
             logger.error("Cannot remove {} units from product {} – only {} in stock",
                     amount, productId, product.getStock());
-            throw new IllegalStateException("Insufficient stock for product: " + productId);
+            throw new InsufficientStockException("Insufficient stock for product: " + productId);
         }
         product.setStock(newStock);
         logger.info("Decreasing stock for product {} by {}", productId, amount);
