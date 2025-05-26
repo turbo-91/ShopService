@@ -7,6 +7,7 @@ import org.shopservice.exception.ProductNotFoundException;
 import org.shopservice.model.*;
 import org.shopservice.model.enums.OrderStatus;
 import org.shopservice.repository.CartRepo;
+import org.shopservice.repository.InventoryLogRepo;
 import org.shopservice.repository.OrderRepo;
 import org.shopservice.repository.ProductRepo;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ public class ShopService {
     private final OrderRepo orderRepo;
     private final ProductRepo productRepo;
     private final CartRepo cartRepo;
+    private final InventoryLogRepo inventoryLogRepo;
 
     private static final Logger logger = LoggerFactory.getLogger(ShopService.class);
 
@@ -60,6 +62,12 @@ public class ShopService {
             }
             product.setStock(newStock);
             productRepo.save(product);
+            inventoryLogRepo.save(InventoryLog.builder()
+                    .delta(-item.getQuantity())
+                    .sourceType("PlaceOrder")
+                    .sourceId(id)
+                    .timestamp(Instant.now())
+                    .build());
         }
 
         // Create and save the new order
@@ -126,6 +134,12 @@ public class ShopService {
             product.setStock(product.getStock() + item.getQuantity());
             productRepo.save(product);
             logger.debug("Restocked {} units of product {}", item.getQuantity(), pid);
+            inventoryLogRepo.save(InventoryLog.builder()
+                    .delta(item.getQuantity())
+                    .sourceType("CancelOrder")
+                    .sourceId(orderId)
+                    .timestamp(Instant.now())
+                    .build());
         }
 
         // Mark order as canceled
@@ -157,6 +171,12 @@ public class ShopService {
                     .orElseThrow(() -> new ProductNotFoundException(productId));
             product.setStock(product.getStock() + item.getQuantity());
             productRepo.save(product);
+            inventoryLogRepo.save(InventoryLog.builder()
+                    .delta(item.getQuantity())
+                    .sourceType("RefundOrder")
+                    .sourceId(orderId)
+                    .timestamp(Instant.now())
+                    .build());
         }
 
         // 4) Mark refunded and save
@@ -178,6 +198,12 @@ public class ShopService {
         product.setStock(newStock);
         logger.info("Increasing stock for product {} by {}", productId, amount);
         productRepo.save(product);
+        inventoryLogRepo.save(InventoryLog.builder()
+                .delta(amount)
+                .sourceType("GoodsIn")
+                .sourceId(productId)
+                .timestamp(Instant.now())
+                .build());
     }
 
     public void goodsOut(String productId, int amount) {
@@ -192,6 +218,12 @@ public class ShopService {
         product.setStock(newStock);
         logger.info("Decreasing stock for product {} by {}", productId, amount);
         productRepo.save(product);
+        inventoryLogRepo.save(InventoryLog.builder()
+                .delta(-amount)
+                .sourceType("GoodsOut")
+                .sourceId(productId)
+                .timestamp(Instant.now())
+                .build());
     }
 
     public void releaseReservedStock(String productId, int amount) {
@@ -201,6 +233,12 @@ public class ShopService {
 
         product.setStock(product.getStock() + amount);
         productRepo.save(product);
+        inventoryLogRepo.save(InventoryLog.builder()
+                .delta(amount)
+                .sourceType("ReleaseReservedStock")
+                .sourceId(productId)
+                .timestamp(Instant.now())
+                .build());
     }
 
     // CART OPERATIONS
@@ -221,6 +259,12 @@ public class ShopService {
             }
             product.setStock(remaining);
             productRepo.save(product);
+            inventoryLogRepo.save(InventoryLog.builder()
+                    .delta(-item.getQuantity())
+                    .sourceType("ReserveCart")
+                    .sourceId(cartId)
+                    .timestamp(Instant.now())
+                    .build());
         }
 
         // Build and save the shopping cart
