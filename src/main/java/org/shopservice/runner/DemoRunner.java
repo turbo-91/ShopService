@@ -3,12 +3,15 @@ package org.shopservice.runner;
 import lombok.RequiredArgsConstructor;
 import org.shopservice.model.*;
 import org.shopservice.model.enums.OrderStatus;
+import org.shopservice.repository.InventoryLogRepo;
 import org.shopservice.repository.ProductRepo;
 import org.shopservice.service.ShopService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Component
@@ -16,12 +19,13 @@ import java.util.List;
 public class DemoRunner implements CommandLineRunner {
     private final ProductRepo productRepo;
     private final ShopService shopService;
+    private final InventoryLogRepo inventoryLogRepo;
 
     @Override
     public void run(String... args) throws Exception {
         // 1) Seed product catalog
         productRepo.save(new Product(
-                "1",
+                "P1",
                 "T-Shirt",
                 "ACME Apparel",
                 "100% cotton crew neck t-shirt",
@@ -31,7 +35,7 @@ public class DemoRunner implements CommandLineRunner {
                 50
         ));
         productRepo.save(new Product(
-                "2",
+                "P2",
                 "Slim Jeans",
                 "DenimCo",
                 "Blue slim-fit denim jeans",
@@ -42,20 +46,20 @@ public class DemoRunner implements CommandLineRunner {
         ));
         System.out.println();
         System.out.println("[SCENARIO A] Seeded products: T-Shirt and Slim Jeans");
-        System.out.println("Stocks: T-Shirt=" + productRepo.findById("1").get().getStock()
-                + ", Slim Jeans=" + productRepo.findById("2").get().getStock());
+        System.out.println("Stocks: T-Shirt=" + productRepo.findById("P1").get().getStock()
+                + ", Slim Jeans=" + productRepo.findById("P2").get().getStock());
         System.out.println();
 
         // 2) Place a new order (PENDING)
         List<OrderItem> items1 = List.of(
-                new OrderItem(productRepo.findById("1").orElseThrow(), 2)
+                new OrderItem(productRepo.findById("P1").orElseThrow(), 2)
         );
         Order order1 = shopService.placeOrder("order1", items1, OrderStatus.PROCESSING);
         System.out.println("[SCENARIO B] Placed order1 for 2×T-Shirt");
         System.out.println("Items: " + order1.getItems());
         System.out.println("Status: " + order1.getStatus());
         System.out.println("Timestamp: " + order1.getTimestamp());
-        System.out.println("Remaining T-Shirt stock=" + productRepo.findById("1").get().getStock());
+        System.out.println("Remaining T-Shirt stock=" + productRepo.findById("P1").get().getStock());
         System.out.println();
 
         // 3) Query orders by status PENDING
@@ -76,8 +80,8 @@ public class DemoRunner implements CommandLineRunner {
 
         // 6) Place a second order (PENDING)
         List<OrderItem> items2 = List.of(
-                new OrderItem(productRepo.findById("1").orElseThrow(), 1),
-                new OrderItem(productRepo.findById("2").orElseThrow(), 2)
+                new OrderItem(productRepo.findById("P1").orElseThrow(), 1),
+                new OrderItem(productRepo.findById("P2").orElseThrow(), 2)
         );
         Order order2 = shopService.placeOrder("order2", items2, OrderStatus.PROCESSING);
         System.out.println("[SCENARIO F] Placed order2 (PENDING):");
@@ -87,36 +91,36 @@ public class DemoRunner implements CommandLineRunner {
         System.out.println(" ");
 
         // 7) Update quantity in order2
-        Order updatedOrder2 = shopService.updateOrderItemQuantity(order2.getId(), "2", 5);
+        Order updatedOrder2 = shopService.updateOrderItemQuantity(order2.getId(), "P2", 5);
         System.out.println("[SCENARIO G] Updated order2 Banana quantity: " +
                 updatedOrder2.getItems().stream()
-                        .filter(item -> item.getProduct().getId().equals("2"))
+                        .filter(item -> item.getProduct().getId().equals("P2"))
                         .findFirst().map(OrderItem::getQuantity).orElse(0));
         System.out.println("Items after update: " + order2.getItems());
         System.out.println(" ");
 
         // 8) Demonstrate goodsIn: restock apples
-        shopService.goodsIn("1", 10);
+        shopService.goodsIn("P1", 10);
         System.out.println("[SCENARIO H] Restocked T-Shirts by 10: stock="
-                + productRepo.findById("1").get().getStock());
+                + productRepo.findById("P1").get().getStock());
         System.out.println();
 
         // 9) Demonstrate goodsOut: ship bananas
-        shopService.goodsOut("2", 5);
+        shopService.goodsOut("P2", 5);
         System.out.println("[SCENARIO I] Shipped 5×Slim Jeans: stock="
-                + productRepo.findById("2").get().getStock());
+                + productRepo.findById("P2").get().getStock());
         System.out.println();
 
         // 10) Reserve stock in a cart
         List<CartItem> cartItems = List.of(
-                new CartItem("1", 3),   // 3×T-Shirt
-                new CartItem("2", 2)    // 2×Slim Jeans
+                new CartItem("P1", 3),   // 3×T-Shirt
+                new CartItem("P2", 2)    // 2×Slim Jeans
         );
         Cart cart = shopService.reserveStockForCart("cart1", cartItems);
         System.out.println("[SCENARIO J] Reserved stock for cart1: " + cart.getItems());
         System.out.println("Stocks after reserve: T-Shirt="
-                + productRepo.findById("1").get().getStock()
-                + ", Slim Jeans=" + productRepo.findById("2").get().getStock());
+                + productRepo.findById("P1").get().getStock()
+                + ", Slim Jeans=" + productRepo.findById("P2").get().getStock());
         System.out.println();
 
         // 11) Calculate cart total without placing an order
@@ -134,7 +138,7 @@ public class DemoRunner implements CommandLineRunner {
         // 12) Cancel the order and restock
         Order canceledOrder = shopService.cancelOrder(order1.getId());
         System.out.println("[SCENARIO M1] Canceled order1: status=" + canceledOrder.getStatus());
-        System.out.println("T-Shirt stock after cancellation=" + productRepo.findById("1").get().getStock());
+        System.out.println("T-Shirt stock after cancellation=" + productRepo.findById("P1").get().getStock());
 
         // 13) Verify order is no longer in pending list
         List<Order> pendingAfterCancel = shopService.getOrdersByStatus(OrderStatus.PROCESSING);
@@ -149,7 +153,7 @@ public class DemoRunner implements CommandLineRunner {
         Order refundedOrder2 = shopService.refundOrder(order2.getId());
         System.out.println("[SCENARIO O] Refunded order2: status=" + refundedOrder2.getStatus());
         System.out.println("Slim Jeans stock after refund: "
-                + productRepo.findById("2").orElseThrow().getStock());
+                + productRepo.findById("P2").orElseThrow().getStock());
         System.out.println();
 
         // 16) Manual release of reserved stock ===
@@ -157,29 +161,27 @@ public class DemoRunner implements CommandLineRunner {
 
 // 1) Reserve 3 units of product "1"
         String demoCartId = "cart-manual-release";
-        List<CartItem> demoItems = List.of(new CartItem("1", 3));
+        List<CartItem> demoItems = List.of(new CartItem("P1", 3));
         shopService.reserveStockForCart(demoCartId, demoItems);
 
 // 2) Check stock after reservation
-        int afterReserve = productRepo.findById("1")
+        int afterReserve = productRepo.findById("P1")
                 .orElseThrow().getStock();
         System.out.println("Stock after reservation: " + afterReserve);
 
 // 3) Manually release the reserved stock
-        shopService.releaseReservedStock("1", 3);
+        shopService.releaseReservedStock("P1", 3);
 
 // 4) Check stock after release
-        int afterRelease = productRepo.findById("1")
+        int afterRelease = productRepo.findById("P1")
                 .orElseThrow().getStock();
         System.out.println("Stock after manual release: " + afterRelease);
         System.out.println();
 
-
-        // Final state of orders by status
-        System.out.println("[SCENARIO OMEGA-I] Final PENDING orders? " + shopService.getOrdersByStatus(OrderStatus.PROCESSING).size() + " orders found");
-        System.out.println("Final PENDING orders: " + shopService.getOrdersByStatus(OrderStatus.PROCESSING));
-        System.out.println();
-        System.out.println("[SCENARIO OMEGA-II] Final COMPLETE orders? " + shopService.getOrdersByStatus(OrderStatus.COMPLETED).size() + " orders found");
-        System.out.println("Final COMPLETED orders: " + shopService.getOrdersByStatus(OrderStatus.COMPLETED));
+        // Inventory Log
+        System.out.println("=== SCENARIO Q: Inventory Audit Trail ===");
+        List<InventoryLog> logs = inventoryLogRepo.findAll();
+        logs.forEach(log -> System.out.println(log));
+        
     }
 }
