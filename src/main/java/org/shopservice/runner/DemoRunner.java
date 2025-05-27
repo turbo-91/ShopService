@@ -10,6 +10,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Component
@@ -180,6 +182,6 @@ public class DemoRunner implements CommandLineRunner {
         System.out.println("=== SCENARIO Q: Inventory Audit Trail ===");
         List<InventoryLog> logs = inventoryLogRepo.findAll();
         logs.forEach(log -> System.out.println(log));
-
+        
     }
 }
