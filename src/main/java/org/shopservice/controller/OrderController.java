@@ -44,16 +44,16 @@ public class OrderController {
         return shopService.getAllOrders();
     }
 
-    // PATCH /orders/{id}/status — Update order status
-    @PatchMapping("/{id}/status")
+    // PUT /orders/{id}/status — Update order status
+    @PutMapping("/{id}/status")
     public ResponseEntity<Order> updateOrderStatus(@PathVariable String id,
                                                    @RequestParam OrderStatus status) {
         Order updated = shopService.updateOrderStatus(id, status);
         return ResponseEntity.ok(updated);
     }
 
-    // PATCH /orders/{id}/items — Update quantity of an item in the order
-    @PatchMapping("/{id}/items")
+    // PUT /orders/{id}/items — Update quantity of an item in the order
+    @PutMapping("/{id}/items")
     public ResponseEntity<Order> updateItemQuantity(@PathVariable String id,
                                                     @RequestParam String productId,
                                                     @RequestParam int quantity) {
