@@ -17,9 +17,12 @@
 
 ### Explore the REST API
 `
-// List all orders
+List all orders
+
 http GET :8080/orders
-// List orders by status
+
+List orders by status
+
 http GET :8080/orders status==COMPLETED
 `
 
