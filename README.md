@@ -14,6 +14,7 @@
 
 # Explore the REST API
 
+### Orders
 List all orders
 ```
 http GET :8080/orders
@@ -54,14 +55,63 @@ Update order status
 ```
 http DELETE :8080/orders/abcd1234
 ```
+Cancel (delete) an order
+```
+http DELETE :8080/orders/abcd1234
+```
+
+### Products
+Create a product
+```
+http POST :8080/products \
+  id=P3 \
+  name="Baseball Cap" \
+  brand="HeadGear" \
+  description="Classic unisex cap" \
+  color="Blue" \
+  size="One-Size" \
+  price:=14.95 \
+  stock:=100
+```
+List all product
+```
+http GET :8080/products
+```
+Get a product by ID
+```
+http GET :8080/products/P3
+```
+Update a product
+```
+http PUT :8080/products/P3 \
+  name="Embroidered Baseball Cap" \
+  brand="HeadGear" \
+  description="Cap with front logo" \
+  color="Navy" \
+  size="One-Size" \
+  price:=16.95 \
+  stock:=120
+```
+Delete a product
+```
+http DELETE :8080/products/P3
+```
+
+### Inventory
+Goods in (increase stock)
+```
+http POST :8080/inventory/in \
+  productId==P1 \
+  amount==20
+```
+Goods out (decrease stock)
+```
+http POST :8080/inventory/out \
+  productId==P1 \
+  amount==5
+```
 
 ### Testing
 
-# products
-curl -X POST   http://localhost:8080/products   -d '{...}' -H 'Content-Type: application/json'
-curl http://localhost:8080/products
-curl http://localhost:8080/products/{id}
-curl -X PUT    http://localhost:8080/products/{id}   -d '{...}'
-curl -X DELETE http://localhost:8080/products/{id}
 
 
