@@ -120,14 +120,6 @@ http POST :8080/inventory/out \
 ```
 mvn test
 ```
-### Run unit tests only:
-```
-mvn clean test -DskipITs
-```
-### Run integration tests only:
-```
-mvn clean verify -DskipUnitTests
-```
 ### Run a single test class:
 ```
 mvn -Dtest=OrderControllerTest test
