@@ -9,8 +9,12 @@
 
 # Local development
 
-- Clone the repository
-- Run Main.java
+1. Clone the repository
+2. Run
+```
+  export SPRING_DATA_MONGODB_URI="mongodb+srv://<username>:<password>@your-cluster.mongodb.net/yourDb?retryWrites=true&w=majority"
+  mvn spring-boot:run
+```
 
 # Explore the REST API
 
@@ -111,7 +115,22 @@ http POST :8080/inventory/out \
   amount==5
 ```
 
-### Testing
-
+# Testing
+### Run all tests:
+```
+mvn test
+```
+### Run unit tests only:
+```
+mvn clean test -DskipITs
+```
+### Run integration tests only:
+```
+mvn clean verify -DskipUnitTests
+```
+### Run a single test class:
+```
+mvn -Dtest=OrderControllerTest test
+```
 
 
