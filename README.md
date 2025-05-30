@@ -1,6 +1,6 @@
 # Shop Service Backend
 - Full CRUD operations for **Orders** and **Products** via REST endpoints
-- - **Inventory** management (goods in / goods out)
+- **Inventory** management (goods in / goods out)
 - Clean separation of data, logic, and repository layers
 - Calculates total price based on Product × Quantity
 - Uses BigDecimal for accurate currency computation
