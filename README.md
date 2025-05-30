@@ -1,7 +1,16 @@
 # Shop Service Backend
-- Calculates total price based on Product x Quantity
-- Uses BigDecimal for accurate currency computation
+- Full CRUD operations for **Orders** and **Products** via REST endpoints
+- - **Inventory** management (goods in / goods out)
 - Clean separation of data, logic, and repository layers
+- Calculates total price based on Product × Quantity
+- Uses BigDecimal for accurate currency computation
+- Robust error handling with custom exceptions and proper HTTP status codes
+- MongoDB persistence with Spring Data repositories
+- Embedded MongoDB for fast, isolated integration tests
+- Comprehensive unit and integration tests covering controllers and services
+- Configurable via environment variables (e.g. `SPRING_DATA_MONGODB_URI`)
+- Built with Spring Boot, Lombok, and Maven
+
 
 # Technologies
 
