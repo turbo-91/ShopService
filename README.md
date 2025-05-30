@@ -21,7 +21,7 @@
 1. Clone the repository
 2. Run
 ```
-  export SPRING_DATA_MONGODB_URI="mongodb+srv://<username>:<password>@your-cluster.mongodb.net/yourDb?retryWrites=true&w=majority"
+  export MONGODB_URI="mongodb+srv://<username>:<password>@your-cluster.mongodb.net/yourDb?retryWrites=true&w=majority"
   mvn spring-boot:run
 ```
 
